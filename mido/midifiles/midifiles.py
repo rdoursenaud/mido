@@ -15,7 +15,6 @@ http://www.recordingblogs.com/sa/tabid/82/EntryId/44/MIDI-Part-XIII-Delta-time-a
 http://www.sonicspot.com/guide/midifiles.html
 """
 
-import io
 import string
 import struct
 import time
@@ -25,7 +24,8 @@ from .meta import (MetaMessage, build_meta_message, meta_charset,
                    encode_variable_int)
 from .tracks import MidiTrack, merge_tracks, fix_end_of_track
 from .units import (DEFAULT_TEMPO, DEFAULT_TICKS_PER_BEAT,
-                    DEFAULT_TIME_SIGNATURE, tick2beat, tick2second)
+                    DEFAULT_TIME_SIGNATURE, tick2beat, tick2second,
+                    MidiFileTimeUnit, MidiFileTiming)
 from ..messages import Message, SPEC_BY_STATUS
 
 
@@ -279,8 +279,8 @@ class MidiFile:
         file=None,
         type=1,
         ticks_per_beat=DEFAULT_TICKS_PER_BEAT,
-        unit='seconds',
-        timing='relative',
+        unit: MidiFileTimeUnit=MidiFileTimeUnit.SECOND,
+        timing: MidiFileTiming=MidiFileTiming.RELATIVE,
         charset='latin1',
         debug=False,
         clip=False,
@@ -372,11 +372,11 @@ class MidiFile:
         for msg in merge_tracks(self.tracks):
             # Convert relative message time to desired unit
             if msg.time > 0:
-                if self.unit.lower() == 'ticks':
+                if self.unit == MidiFileTimeUnit.TICK:
                     delta = msg.time
-                elif self.unit.lower() == 'seconds':
+                elif self.unit == MidiFileTimeUnit.SECOND:
                     delta = tick2second(msg.time, self.ticks_per_beat, tempo)
-                elif self.unit.lower() == 'beats':
+                elif self.unit == MidiFileTimeUnit.BEAT:
                     delta = tick2beat(msg.time, self.ticks_per_beat,
                                       time_signature)
                 else:
@@ -386,9 +386,9 @@ class MidiFile:
             else:
                 delta = 0
             # Convert relative time to absolute values if needed
-            if self.timing.lower() == 'absolute':
+            if self.timing == MidiFileTiming.ABSOLUTE:
                 cum_delta += delta
-            elif self.timing.lower() == 'relative':
+            elif self.timing == MidiFileTiming.RELATIVE:
                 cum_delta = delta
             else:
                 raise ValueError("`timing` must be either 'relative' or "

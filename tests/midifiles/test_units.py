@@ -87,9 +87,8 @@ def test_beat2tick():
     assert beat2tick(0.01, ticks_per_beat=100) == 1
     # division rounds to the closest even integer
     assert beat2tick(0.004, ticks_per_beat=100) == 0
-    assert beat2tick(0.005, ticks_per_beat=100) == 1
-    # TODO: Python 2 and 3 rounds differently, find a solution?
-    #       The result produced by Python 3 seems the way to go
+    assert beat2tick(0.005, ticks_per_beat=100) == 0
+    assert beat2tick(0.006, ticks_per_beat=100) == 1
     assert beat2tick(0.015, ticks_per_beat=100) == 2
     assert beat2tick(0.025, ticks_per_beat=100) == 2
     # x/4 time signature: beat = quarter note: 480 ticks / beat
