@@ -9,7 +9,7 @@ try:
     import importlib.metadata as importlib_metadata
 except ImportError:
     # Python 3.7 and lower
-    import importlib_metadata
+    import importlib_metadata  # type: ignore[no-redef]
 
 __version__ = "0.0.0.dev0"
 

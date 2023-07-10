@@ -3,65 +3,69 @@
 # SPDX-License-Identifier: MIT
 
 from numbers import Integral, Real
-from .specs import (SPEC_BY_TYPE, MIN_SONGPOS, MAX_SONGPOS,
-                    MIN_PITCHWHEEL, MAX_PITCHWHEEL)
+from typing import Any, Sequence
+
+from .specs import (
+    SPEC_BY_TYPE, MIN_SONGPOS, MAX_SONGPOS,
+    MIN_PITCHWHEEL, MAX_PITCHWHEEL
+)
 
 
-def check_type(type_):
+def check_type(type_: Any) -> None:
     if type_ not in SPEC_BY_TYPE:
         raise ValueError(f'invalid message type {type_!r}')
 
 
-def check_channel(channel):
-    if not isinstance(channel, Integral):
+def check_channel(channel: Any) -> None:
+    if not isinstance(channel, int):
         raise TypeError('channel must be int')
-    elif not 0 <= channel <= 15:
+    if not 0 <= channel <= 15:
         raise ValueError('channel must be in range 0..15')
 
 
-def check_pos(pos):
-    if not isinstance(pos, Integral):
+def check_pos(pos: Any) -> None:
+    if not isinstance(pos, int):
         raise TypeError('song pos must be int')
-    elif not MIN_SONGPOS <= pos <= MAX_SONGPOS:
+    if not MIN_SONGPOS <= pos <= MAX_SONGPOS:
         raise ValueError('song pos must be in range {}..{}'.format(
                          MIN_SONGPOS, MAX_SONGPOS))
 
 
-def check_pitch(pitch):
-    if not isinstance(pitch, Integral):
+def check_pitch(pitch: Any) -> None:
+    if not isinstance(pitch, int):
         raise TypeError('pichwheel value must be int')
-    elif not MIN_PITCHWHEEL <= pitch <= MAX_PITCHWHEEL:
+    if not MIN_PITCHWHEEL <= pitch <= MAX_PITCHWHEEL:
         raise ValueError('pitchwheel value must be in range {}..{}'.format(
                          MIN_PITCHWHEEL, MAX_PITCHWHEEL))
 
 
-def check_data(data_bytes):
+def check_data(data_bytes: Sequence[Any]) -> None:
     for byte in data_bytes:
         check_data_byte(byte)
 
 
-def check_frame_type(value):
-    if not isinstance(value, Integral):
+def check_frame_type(value: Any) -> None:
+    if not isinstance(value, int):
         raise TypeError('frame_type must be int')
-    elif not 0 <= value <= 7:
+    if not 0 <= value <= 7:
         raise ValueError('frame_type must be in range 0..7')
 
 
-def check_frame_value(value):
-    if not isinstance(value, Integral):
+def check_frame_value(value: Any) -> None:
+    if not isinstance(value, int):
         raise TypeError('frame_value must be int')
-    elif not 0 <= value <= 15:
+    if not 0 <= value <= 15:
         raise ValueError('frame_value must be in range 0..15')
 
 
-def check_data_byte(value):
-    if not isinstance(value, Integral):
+def check_data_byte(value: Any) -> None:
+    if not isinstance(value, int):
         raise TypeError('data byte must be int')
-    elif not 0 <= value <= 127:
+    if not 0 <= value <= 127:
         raise ValueError('data byte must be in range 0..127')
 
 
-def check_time(time):
+def check_time(time: Any) -> None:
     if not isinstance(time, Real):
         raise TypeError('time must be int or float')
 
@@ -85,11 +89,11 @@ _CHECKS = {
 }
 
 
-def check_value(name, value):
+def check_value(name: str, value: Any) -> None:
     _CHECKS[name](value)
 
 
-def check_msgdict(msgdict):
+def check_msgdict(msgdict: dict) -> None:
     spec = SPEC_BY_TYPE.get(msgdict['type'])
     if spec is None:
         raise ValueError('unknown message type {!r}'.format(msgdict['type']))

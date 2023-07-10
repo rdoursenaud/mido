@@ -542,7 +542,7 @@ class MetaMessage(BaseMessage):
         spec = _META_SPEC_BY_TYPE[self.type]
         data = spec.encode(self)
 
-        return ([0xff, spec.type_byte] + encode_variable_int(len(data)) + data)
+        return [0xff, spec.type_byte] + encode_variable_int(len(data)) + data
 
     @classmethod
     def from_bytes(cls, msg_bytes):

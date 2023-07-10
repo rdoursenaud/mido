@@ -4,64 +4,93 @@
 
 """
 MIDI Objects for Python
+========================
 
 Mido is a library for working with MIDI messages and ports. It's
 designed to be as straight forward and Pythonic as possible.
 
-Creating messages:
+Creating messages
+-----------------
 
-    Message(type, **parameters) -- create a new message
-    MetaMessage(type, **parameters) -- create a new meta message
+.. code-block:: python
+
+    Message(type, **parameters)  # create a new message
+    MetaMessage(type, **parameters)  # create a new meta message
     UnknownMetaMessage(type_byte, data=None, time=0)
 
-Ports:
+Ports
+-----
 
-    open_input(name=None, virtual=False, callback=None) -- open an input port
-    open_output(name=None, virtual=False,               -- open an output port
-                autoreset=False)
-    open_ioport(name=None, virtual=False,        -- open an I/O port (capable
-                callback=None, autoreset=False)     of both input and output)
+.. code-block:: python
 
-    get_input_names() -- return a list of names of available input ports
-    get_output_names() -- return a list of names of available output ports
-    get_ioport_names() -- return a list of names of available I/O ports
+    open_input(name=None, virtual=False, callback=None)  # open an input port
+    open_output(name=None, virtual=False,
+                autoreset=False)  # open an output port
+    open_ioport(name=None, virtual=False, callback=None,
+                autoreset=False)  # open an I/O port
+                                  # (capable of both input and output)
 
-MIDI files:
+    get_input_names()  # return a list of names of available input ports
+    get_output_names()  # return a list of names of available output ports
+    get_ioport_names()  # return a list of names of available I/O ports
 
-    MidiFile(filename, **kwargs) -- open a MIDI file
-    MidiTrack()  -- a MIDI track
-    bpm2tempo()  -- convert beats per minute to MIDI file tempo
-    tempo2bpm()  -- convert MIDI file tempo to beats per minute
-    merge_tracks(tracks)  -- merge tracks into one track
+MIDI files
+----------
 
-SYX files:
+.. code-block:: python
 
-    read_syx_file(filename)  -- read a SYX file
-    write_syx_file(filename, messages,
-                   plaintext=False)  -- write a SYX file
-Parsing MIDI streams:
+    MidiFile(filename, **kwargs)  # open a MIDI file
+    MidiTrack()  # a MIDI track
+    bpm2tempo()  # convert beats per minute to MIDI file tempo
+    tempo2bpm()  # convert MIDI file tempo to beats per minute
+    merge_tracks(tracks)  # merge tracks into one track
 
-    parse(bytes) -- parse a single message bytes
-                    (any iterable that generates integers in 0..127)
-    parse_all(bytes) -- parse all messages bytes
-    Parser -- MIDI parser class
+SYX files
+---------
 
-Parsing objects serialized with str(message):
+.. code-block:: python
 
-    parse_string(string) -- parse a string containing a message
-    parse_string_stream(iterable) -- parse strings from an iterable and
+    read_syx_file(filename)  # read a SYX file
+    write_syx_file(filename, messages, plaintext=False)  # write a SYX file
+
+Parsing MIDI streams
+--------------------
+
+.. code-block:: python
+
+    parse(bytes)  # parse a single message bytes
+                  # (any iterable that generates integers in 0..127)
+    parse_all(bytes)  # parse all messages bytes
+    Parser  # MIDI parser class
+
+Parsing objects serialized with str(message)
+--------------------------------------------
+
+.. code-block:: python
+
+    parse_string(string)  # parse a string containing a message
+    parse_string_stream(iterable)  # parse strings from an iterable and
                                      generate messages
 
-Sub modules:
+Submodules
+----------
 
-    ports -- useful tools for working with ports
+.. code-block:: python
 
-For more on MIDI, see:
+    ports  # useful tools for working with ports
+
+For more on MIDI
+----------------
+
+.. seealso::
 
     http://www.midi.org/
 
 
-Getting started:
+Getting started
+---------------
+
+.. code-block:: python
 
     >>> import mido
     >>> m = mido.Message('note_on', note=60, velocity=64)
@@ -92,7 +121,10 @@ Getting started:
     >>> get_input_names()
     ['MPK mini MIDI 1', 'SH-201']
 """
+from __future__ import annotations
+
 import os
+from typing import Sequence
 
 from . import ports, sockets
 from .backends.backend import Backend
@@ -108,20 +140,25 @@ from .syx import read_syx_file, write_syx_file
 from .version import version_info
 
 # Prevent splat import.
-__all__ = []
+__all__: Sequence[str] = []
 
 
-def set_backend(name=None, load=False):
-    """Set current backend.
+def set_backend(name: str | Backend | None = None, load: bool = False) -> None:
+    """Sets the backend to use.
 
-    name can be a module name like 'mido.backends.rtmidi' or
-    a Backend object.
+    :param name: can be a module name like ``mido.backends.rtmidi`` or a
+        ``Backend`` object.
+        If no name is passed, the default backend will be used.
+    :type name: str | Backend | None, optional, defaults to None
 
-    If no name is passed, the default backend will be used.
+    :param load: Immediately loads the backend if ``True``. Else, loading is
+        deferred to the first use.
+    :type load: bool, optional, defaults to False
 
-    This will replace all the open_*() and get_*_name() functions
+    This will replace all the ``open_*()`` and ``get_*_name()`` functions
     in top level mido module. The module will be loaded the first
-    time one of those functions is called."""
+    time one of those functions is called.
+    """
 
     glob = globals()
 

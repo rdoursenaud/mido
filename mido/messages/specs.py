@@ -9,6 +9,11 @@ TODO:
     * add lookup functions for messages definitions by type and status
       byte.
 """
+from __future__ import annotations
+
+from typing import Iterable, Mapping, Tuple
+from typing_extensions import TypedDict
+
 # TODO: these include undefined messages.
 CHANNEL_MESSAGES = set(range(0x80, 0xf0))
 COMMON_MESSAGES = set(range(0xf0, 0xf8))
@@ -26,7 +31,17 @@ MIN_SONGPOS = 0
 MAX_SONGPOS = 16383
 
 
-def _defmsg(status_byte, type_, value_names, length):
+class Spec(TypedDict, total=False):
+    status_byte: int
+    type: str
+    value_names: tuple[str, ...]
+    attribute_names: set[str]
+    length: int | float
+    data: tuple[int, ...]
+
+
+def _defmsg(status_byte: int, type_: str, value_names: tuple[str, ...],
+            length: int | float) -> Spec:
     return {
         'status_byte': status_byte,
         'type': type_,
@@ -64,10 +79,13 @@ SPECS = [
 ]
 
 
-def _make_spec_lookups(specs):
-    lookup = {}
-    by_status = {}
-    by_type = {}
+def _make_spec_lookups(
+        specs: Iterable[Spec]
+) -> Tuple[dict[int | str, Spec], dict[int, Spec], dict[str, Spec]]:
+
+    lookup: dict[int | str, Spec] = {}
+    by_status: dict[int, Spec] = {}
+    by_type: dict[str, Spec] = {}
 
     for spec in specs:
         type_ = spec['type']
@@ -111,7 +129,7 @@ DEFAULT_VALUES = {
 
 # TODO: should this be in decode.py?
 
-def make_msgdict(type_, overrides):
+def make_msgdict(type_: str, overrides: Mapping[str, object]) -> Spec:
     """Return a new message.
 
     Returns a dictionary representing a message.

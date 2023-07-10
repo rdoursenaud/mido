@@ -8,11 +8,11 @@
 API Reference
 =============
 
+.. module:: mido
+
 
 Messages
 --------
-
-.. module:: mido
 
 .. autoclass:: Message
    :members:
@@ -29,14 +29,14 @@ Frozen Messages
 
 .. module:: mido.frozen
 
-.. autofunction:: freeze_message
-.. autofunction:: thaw_message
-.. autofunction:: is_frozen
-
 .. autoclass:: Frozen
 .. autoclass:: FrozenMessage
 .. autoclass:: FrozenMetaMessage
 .. autoclass:: FrozenUnknownMetaMessage
+
+.. autofunction:: is_frozen
+.. autofunction:: freeze_message
+.. autofunction:: thaw_message
 
 
 Parsing

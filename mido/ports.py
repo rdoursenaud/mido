@@ -1,81 +1,96 @@
 # SPDX-FileCopyrightText: 2013 Ole Martin Bjorndalen <ombdalen@gmail.com>
+# SPDX-FileCopyrightText: 2023 Raphaël Doursenaud <rdoursenaud@gmail.com>
 #
 # SPDX-License-Identifier: MIT
 
 """
 Useful tools for working with ports
 """
+from __future__ import annotations
+
+import abc
 import random
 import threading
 import time
+from abc import ABC
+from types import TracebackType
+from typing import Iterator, Optional, Sequence, Tuple
+
+from typing_extensions import Final, Literal
 
 from .messages import Message
 from .parser import Parser
 
 # How many seconds to sleep before polling again.
-_DEFAULT_SLEEP_TIME = 0.001
+_DEFAULT_SLEEP_TIME: Final = 0.001
 _sleep_time = _DEFAULT_SLEEP_TIME
 
 
 # TODO: document this more.
-def sleep():
-    """Sleep for N seconds.
+def sleep() -> None:
+    """Sleeps for N seconds.
 
     This is used in ports when polling and waiting for messages. N can
-    be set with set_sleep_time()."""
+    be set with set_sleep_time().
+    """
     time.sleep(_sleep_time)
 
 
-def set_sleep_time(seconds=_DEFAULT_SLEEP_TIME):
-    """Set the number of seconds sleep() will sleep."""
+def set_sleep_time(seconds: float = _DEFAULT_SLEEP_TIME) -> None:
+    """Sets the number of seconds sleep() will sleep.
+    """
     global _sleep_time
     _sleep_time = seconds
 
 
-def get_sleep_time():
-    """Get number of seconds sleep() will sleep."""
+def get_sleep_time() -> float:
+    """Gets the number of seconds sleep() will sleep.
+
+    :return: The number of seconds sleep() will sleep.
+    :rtype: float
+    """
     return _sleep_time
 
 
-def reset_messages():
-    """Yield "All Notes Off" and "Reset All Controllers" for all channels"""
-    ALL_NOTES_OFF = 123
-    RESET_ALL_CONTROLLERS = 121
+def reset_messages() -> Iterator[Message]:
+    """Yields ``All Notes Off`` and ``Reset All Controllers`` for all channels.
+    """
+    ALL_NOTES_OFF: Final = 123
+    RESET_ALL_CONTROLLERS: Final = 121
     for channel in range(16):
         for control in [ALL_NOTES_OFF, RESET_ALL_CONTROLLERS]:
             yield Message('control_change', channel=channel, control=control)
 
 
-def panic_messages():
-    """Yield "All Sounds Off" for all channels.
+def panic_messages() -> Iterator[Message]:
+    """Yields ``All Sounds Off`` for all channels.
 
     This will mute all sounding notes regardless of
     envelopes. Useful when notes are hanging and nothing else
     helps.
     """
-    ALL_SOUNDS_OFF = 120
+    ALL_SOUNDS_OFF: Final = 120
     for channel in range(16):
-        yield Message('control_change',
-                      channel=channel, control=ALL_SOUNDS_OFF)
+        yield Message('control_change', channel=channel,
+                      control=ALL_SOUNDS_OFF)
 
 
 class DummyLock:
-    def __enter__(self):
+    def __enter__(self) -> DummyLock:
         return self
 
-    def __exit__(self, *_):
+    def __exit__(self, *_) -> Literal[False]:
         return False
 
 
-class BasePort:
-    """
-    Abstract base class for Input and Output ports.
+class BasePort(ABC):
+    """Abstract base class for Input and Output ports.
     """
     is_input = False
     is_output = False
     _locking = True
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name: str | None = None, **kwargs) -> None:
         if hasattr(self, 'closed'):
             # __init__() called twice (from BaseInput and BaseOutput).
             # This stops _open() from being called twice.
@@ -96,8 +111,8 @@ class BasePort:
     def _close(self):
         pass
 
-    def close(self):
-        """Close the port.
+    def close(self) -> None:
+        """Closes the port.
 
         If the port is already closed, nothing will happen.  The port
         is automatically closed when the object goes out of scope or
@@ -114,17 +129,20 @@ class BasePort:
                 self._close()
                 self.closed = True
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def __enter__(self):
+    def __enter__(self) -> BasePort:
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self,
+                 exc_type: type[BaseException],
+                 exc_value: BaseException,
+                 traceback: TracebackType) -> Literal[False]:
         self.close()
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.closed:
             state = 'closed'
         else:
@@ -156,7 +174,7 @@ class BaseInput(BasePort):
     """
     is_input = True
 
-    def __init__(self, name='', **kwargs):
+    def __init__(self, name: str = '', **kwargs) -> None:
         """Create an input port.
 
         name is the port name, as returned by input_names(). If
@@ -166,23 +184,24 @@ class BaseInput(BasePort):
         self._parser = Parser()
         self._messages = self._parser.messages  # Shortcut.
 
-    def _check_callback(self):
+    def _check_callback(self) -> None:
         if hasattr(self, 'callback') and self.callback is not None:
             raise ValueError('a callback is set for this port')
 
     def _receive(self, block=True):
         pass
 
-    def iter_pending(self):
-        """Iterate through pending messages."""
+    def iter_pending(self) -> Iterator[Message] | None:
+        """Iterate through pending messages.
+        """
         while True:
             msg = self.poll()
             if msg is None:
-                return
+                return None
             else:
                 yield msg
 
-    def receive(self, block=True):
+    def receive(self, block: bool = True) -> Message | None:
         """Return the next message.
 
         This will block until a message arrives.
@@ -226,14 +245,16 @@ class BaseInput(BasePort):
 
             sleep()
 
-    def poll(self):
+    def poll(self) -> Message | None:
         """Receive the next pending message or None
 
-        This is the same as calling `receive(block=False)`."""
+        This is the same as calling `receive(block=False)`.
+        """
         return self.receive(block=False)
 
-    def __iter__(self):
-        """Iterate through messages until the port closes."""
+    def __iter__(self) -> Iterator[Optional[Message]]:
+        """Iterate through messages until the port closes.
+        """
         # This could have simply called receive() in a loop, but that
         # could result in a "port closed during receive()" error which
         # is hard to catch here.
@@ -252,15 +273,15 @@ class BaseInput(BasePort):
 
 
 class BaseOutput(BasePort):
-    """
-    Base class for output port.
+    """Base class for output port.
 
     Subclass and override _send() to create a new port type.  (See
     portmidi.py for how to do this.)
     """
     is_output = True
 
-    def __init__(self, name='', autoreset=False, **kwargs):
+    def __init__(self, name: str = '', autoreset: bool = False,
+                 **kwargs) -> None:
         """Create an output port
 
         name is the port name, as returned by output_names(). If
@@ -272,7 +293,7 @@ class BaseOutput(BasePort):
     def _send(self, msg):
         pass
 
-    def send(self, msg):
+    def send(self, msg: Message) -> None:
         """Send a message on the port.
 
         A copy of the message will be sent, so you can safely modify
@@ -288,15 +309,16 @@ class BaseOutput(BasePort):
         with self._lock:
             self._send(msg.copy())
 
-    def reset(self):
-        """Send "All Notes Off" and "Reset All Controllers" on all channels"""
+    def reset(self) -> None:
+        """Send "All Notes Off" and "Reset All Controllers" on all channels
+        """
         if self.closed:
             return
 
         for msg in reset_messages():
             self.send(msg)
 
-    def panic(self):
+    def panic(self) -> None:
         """Send "All Sounds Off" on all channels.
 
         This will mute all sounding notes regardless of
@@ -311,7 +333,7 @@ class BaseOutput(BasePort):
 
 
 class BaseIOPort(BaseInput, BaseOutput):
-    def __init__(self, name='', **kwargs):
+    def __init__(self, name: str = '', **kwargs) -> None:
         """Create an IO port.
 
         name is the port name, as returned by ioport_names().
@@ -330,7 +352,7 @@ class IOPort(BaseIOPort):
 
     _locking = False
 
-    def __init__(self, input, output):
+    def __init__(self, input: BaseInput, output: BaseOutput) -> None:
         self.input = input
         self.output = output
 
@@ -340,43 +362,49 @@ class IOPort(BaseIOPort):
         self.closed = False
         self._lock = DummyLock()
 
-    def _close(self):
+    def _close(self) -> None:
         self.input.close()
         self.output.close()
 
-    def _send(self, message):
+    def _send(self, message: Message) -> None:
         self.output.send(message)
 
-    def _receive(self, block=True):
+    def _receive(self, block: bool = True) -> Message | None:
         return self.input.receive(block=block)
 
 
 class EchoPort(BaseIOPort):
-    def _send(self, message):
+    def _send(self, message: Message) -> None:
         self._messages.append(message)
 
     __iter__ = BaseIOPort.iter_pending
 
 
 class MultiPort(BaseIOPort):
-    def __init__(self, ports, yield_ports=False):
+    def __init__(self,
+                 ports: Sequence[BasePort],
+                 yield_ports: bool = False) -> None:
         BaseIOPort.__init__(self, 'multi')
         self.ports = list(ports)
         self.yield_ports = yield_ports
 
-    def _send(self, message):
+    def _send(self, message: Message) -> None:
         for port in self.ports:
             if not port.closed:
                 # TODO: what if a SocketPort connection closes in-between here?
                 port.send(message)
 
-    def _receive(self, block=True):
+    def _receive(self, block: bool = True) -> None:
         self._messages.extend(multi_receive(self.ports,
                                             yield_ports=self.yield_ports,
                                             block=block))
 
 
-def multi_receive(ports, yield_ports=False, block=True):
+def multi_receive(
+    ports: Sequence[BaseInput],
+    yield_ports: bool = False,
+    block: bool = True
+) -> (Iterator[Message] | Iterator[Tuple[BasePort, Message]]):
     """Receive messages from multiple ports.
 
     Generates messages from ever input port. The ports are polled in
@@ -407,7 +435,10 @@ def multi_receive(ports, yield_ports=False, block=True):
             break
 
 
-def multi_iter_pending(ports, yield_ports=False):
+def multi_iter_pending(
+    ports: list[BaseInput],
+    yield_ports: bool = False
+) -> (Iterator[Message] | Iterator[Tuple[BasePort, Message]]):
     """Iterate through all pending messages in ports.
 
     This is the same as calling multi_receive(ports, block=False).
@@ -416,7 +447,8 @@ def multi_iter_pending(ports, yield_ports=False):
     return multi_receive(ports, yield_ports=yield_ports, block=False)
 
 
-def multi_send(ports, msg):
-    """Send message on all ports."""
+def multi_send(ports: Sequence[BaseOutput], msg: Message) -> None:
+    """Send message on all ports.
+    """
     for port in ports:
         port.send(msg)
