@@ -28,6 +28,9 @@ class QueuePort(ports.BaseIOPort):
         except queue.Empty:
             return None
 
+    def _close(self):
+        del self.queue
+
     def _device_type(self):
         return 'Queue'
 

@@ -19,7 +19,8 @@ import select
 import threading
 import subprocess
 from ..messages import Message
-from ._common import PortMethods, InputMethods, OutputMethods
+from ..ports import BaseInput, BaseOutput
+
 """
 Dir Device    Name
 IO  hw:1,0,0  UM-1 MIDI 1
@@ -52,7 +53,7 @@ def _get_device(name, mode):
         raise OSError(f'unknown port {name!r}')
 
 
-class Input(PortMethods, InputMethods):
+class Input(BaseInput):
     def __init__(self, name=None, **kwargs):
         self.name = name
         self.closed = False
@@ -75,6 +76,9 @@ class Input(PortMethods, InputMethods):
         else:
             # The first line is sometimes blank.
             return None
+
+    def _receive(self):
+        pass
 
     def receive(self, block=True):
         if not block:
@@ -103,13 +107,16 @@ class Input(PortMethods, InputMethods):
             self.closed = True
 
 
-class Output(PortMethods, OutputMethods):
+class Output(BaseOutput):
     def __init__(self, name=None, autoreset=False, **kwargs):
         self.name = name
         self.autoreset = autoreset
         self.closed = False
 
         self._dev = _get_device(self.name, 'is_output')
+
+    def _send(self, **kwargs):
+        pass
 
     def send(self, msg):
         proc = subprocess.Popen(['amidi', '--send-hex', msg.hex(),

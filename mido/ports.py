@@ -5,6 +5,9 @@
 """
 Useful tools for working with ports
 """
+from __future__ import annotations
+
+import abc
 import random
 import threading
 import time
@@ -90,11 +93,13 @@ class BasePort:
         self._open(**kwargs)
         self.closed = False
 
-    def _open(self, **kwargs):
-        pass
+    @abc.abstractmethod
+    def _open(self, **kwargs) -> None:
+        raise NotImplementedError
 
-    def _close(self):
-        pass
+    @abc.abstractmethod
+    def _close(self) -> None:
+        raise NotImplementedError
 
     def close(self):
         """Close the port.
@@ -170,8 +175,9 @@ class BaseInput(BasePort):
         if hasattr(self, 'callback') and self.callback is not None:
             raise ValueError('a callback is set for this port')
 
-    def _receive(self, block=True):
-        pass
+    @abc.abstractmethod
+    def _receive(self, block: bool = True) -> Message | None:
+        raise NotImplementedError
 
     def iter_pending(self):
         """Iterate through pending messages."""
@@ -269,8 +275,9 @@ class BaseOutput(BasePort):
         BasePort.__init__(self, name, **kwargs)
         self.autoreset = autoreset
 
-    def _send(self, msg):
-        pass
+    @abc.abstractmethod
+    def _send(self, msg: Message) -> None:
+        raise NotImplementedError
 
     def send(self, msg):
         """Send a message on the port.

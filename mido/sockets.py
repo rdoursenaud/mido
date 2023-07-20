@@ -33,6 +33,9 @@ class PortServer(MultiPort):
         self._socket.bind((host, portno))
         self._socket.listen(backlog)
 
+    def _open(self, **kwargs) -> None:
+        pass
+
     def _get_device_type(self):
         return 'server'
 
@@ -94,6 +97,9 @@ class SocketPort(BaseIOPort):
 
         self._rfile = self._socket.makefile('rb', **kwargs)
         self._wfile = self._socket.makefile('wb', **kwargs)
+
+    def _open(self, **kwargs) -> None:
+        pass
 
     def _get_device_type(self):
         return 'socket'

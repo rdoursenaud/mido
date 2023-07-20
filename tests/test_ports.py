@@ -15,6 +15,9 @@ class TestIOPort:
         def _send(self, message):
             self._messages.append(message)
 
+        def _receive(self, block=True):
+            pass
+
         def _close(self):
             self.close_called = True
 
@@ -72,6 +75,12 @@ def test_close_inside_iteration():
             self._messages.extend(messages)
             self.closed = False
 
+        def _open(self, **_):
+            pass
+
+        def _send(self, msg):
+            pass
+
         def _receive(self, block=True):
             # Oops, the other end hung up.
             if self._messages:
@@ -79,6 +88,9 @@ def test_close_inside_iteration():
             else:
                 self.close()
                 return None
+
+        def _close(self, **_):
+            pass
 
     message = Message('note_on')
     with Port([message, message]) as port:
