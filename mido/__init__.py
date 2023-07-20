@@ -105,10 +105,15 @@ from .midifiles import (MidiFile, MidiTrack, merge_tracks,
                         KeySignatureError)
 from .parser import Parser, parse, parse_all
 from .syx import read_syx_file, write_syx_file
-from .version import version_info
+from .version import __version__
 
 # Prevent splat import.
 __all__ = []
+
+# FIXME: Deprecate the use of version_info even if it's never been documented
+#  and prefer PEP8 __version__. version_info is used in modules built from C
+#  but we are almost pure Python!
+version_info = __version__
 
 
 def set_backend(name=None, load=False):

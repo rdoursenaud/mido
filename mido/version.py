@@ -14,9 +14,7 @@ except ImportError:
 __version__ = "0.0.0.dev0"
 
 try:
-    __version__ = importlib_metadata.version("mido")
+    __version__ = importlib_metadata.version(__package__)
 except importlib_metadata.PackageNotFoundError:
     # Package is not installed
     pass
-
-version_info = packaging.version.Version(__version__)
